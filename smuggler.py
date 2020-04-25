@@ -231,16 +231,16 @@ def exploit_bypass():
         if "EXPLOIT-1" in exp: # extract all exploit-1 (bypass front-end ACLs)
             if request_type == "TE-CL":
                 if "TE-CL" in exp: # exploit 1 TE-CL
-                    exploit_bypass_armed(exploit, method, path, target, restricted_path, content_length, exp, addr, SSL)
+                    exploit_bypass_armed(method, path, target, restricted_path, content_length, exp, addr, SSL)
             elif request_type == "CL-TE":
                 if "CL-TE" in exp: # exploit 1 CL-TE
-                    exploit_bypass_armed(exploit, method, path, target, restricted_path, content_length, exp, addr, SSL)
+                    exploit_bypass_armed(method, path, target, restricted_path, content_length, exp, addr, SSL)
             elif request_type == "TE-TE":
                 if "TE-TE" in exp: # exploit 1 TE-TE
-                    exploit_bypass_armed(exploit, method, path, target, restricted_path, content_length, exp, addr, SSL)
+                    exploit_bypass_armed(method, path, target, restricted_path, content_length, exp, addr, SSL)
             elif request_type == "CL-CL":
                 if "CL-CL" in exp: # exploit 1 CL-CL
-                    exploit_bypass_armed(exploit, method, path, target, restricted_path, content_length, exp, addr, SSL)
+                    exploit_bypass_armed(method, path, target, restricted_path, content_length, exp, addr, SSL)
             else: # send all!
                 exploit = exp.split("#")[1]
                 exploit = exploit.replace("$method", method)
@@ -253,7 +253,7 @@ def exploit_bypass():
                 print(str(exploit))
                 send_exploit(addr, SSL, exploit) # send expoit
 
-def exploit_bypass_armed(exploit, method, path, target, restricted_path, content_length, exp, addr, SSL):
+def exploit_bypass_armed(method, path, target, restricted_path, content_length, exp, addr, SSL):
     exploit = exp.split("#")[1]
     exploit = exploit.replace("$method", method)
     exploit = exploit.replace("$path", path)
@@ -284,16 +284,16 @@ def exploit_reveal():
         if "EXPLOIT-2" in exp: # extract exploit-2 (reveal rewriting)
             if request_type == "TE-CL":
                 if "TE-CL" in exp: # exploit 2 TE-CL
-                    exploit_reveal_armed(exploit, method, path, target, parameter, content_length, exp, addr, SSL)
+                    exploit_reveal_armed(method, path, target, parameter, content_length, exp, addr, SSL)
             elif request_type == "CL-TE":
                 if "CL-TE" in exp: # exploit 2 CL-TE
-                    exploit_reveal_armed(exploit, method, path, target, parameter, content_length, exp, addr, SSL)
+                    exploit_reveal_armed(method, path, target, parameter, content_length, exp, addr, SSL)
             elif request_type == "TE-TE":
                 if "TE-TE" in exp: # exploit 2 TE-TE
-                    exploit_reveal_armed(exploit, method, path, target, parameter, content_length, exp, addr, SSL)
+                    exploit_reveal_armed(method, path, target, parameter, content_length, exp, addr, SSL)
             elif request_type == "CL-CL":
                 if "CL-CL" in exp: # exploit 2 CL-CL
-                    exploit_reveal_armed(exploit, method, path, target, parameter, content_length, exp, addr, SSL)
+                    exploit_reveal_armed(method, path, target, parameter, content_length, exp, addr, SSL)
             else: # send all!
                 exploit = exp.split("#")[1]
                 exploit = exploit.replace("$method", method)
@@ -306,7 +306,7 @@ def exploit_reveal():
                 print(str(exploit))
                 send_exploit(addr, SSL, exploit) # send expoit
 
-def exploit_reveal_armed(exploit, method, path, target, parameter, content_length, exp, addr, SSL):
+def exploit_reveal_armed(method, path, target, parameter, content_length, exp, addr, SSL):
     exploit = exp.split("#")[1]
     exploit = exploit.replace("$method", method)
     exploit = exploit.replace("$path", path)
@@ -338,16 +338,16 @@ def exploit_capture():
         if "EXPLOIT-3" in exp: # extract exploit-3 (capture users requests)
             if request_type == "TE-CL":
                 if "TE-CL" in exp: # exploit 3 TE-CL
-                    exploit_capture_armed(exploit, method, path, target, parameters, cookie, content_length, exp, addr, SSL)
+                    exploit_capture_armed(method, path, target, parameters, cookie, content_length, exp, addr, SSL)
             elif request_type == "CL-TE":
                 if "CL-TE" in exp: # exploit 3 CL-TE
-                    exploit_capture_armed(exploit, method, path, target, parameters, cookie, content_length, exp, addr, SSL)
+                    exploit_capture_armed(method, path, target, parameters, cookie, content_length, exp, addr, SSL)
             elif request_type == "TE-TE":
                 if "TE-TE" in exp: # exploit 3 TE-TE
-                    exploit_capture_armed(exploit, method, path, target, parameters, cookie, content_length, exp, addr, SSL)
+                    exploit_capture_armed(method, path, target, parameters, cookie, content_length, exp, addr, SSL)
             elif request_type == "CL-CL":
                 if "CL-CL" in exp: # exploit 3 CL-CL
-                    exploit_capture_armed(exploit, method, path, target, parameters, cookie, content_length, exp, addr, SSL)
+                    exploit_capture_armed(method, path, target, parameters, cookie, content_length, exp, addr, SSL)
             else: # send all!
                 exploit = exp.split("#")[1]
                 exploit = exploit.replace("$method", method)
@@ -361,7 +361,7 @@ def exploit_capture():
                 print(str(exploit))
                 send_exploit(addr, SSL, exploit) # send expoit
 
-def exploit_capture_armed(exploit, method, path, target, parameters, cookie, content_length, exp, addr, SSL):
+def exploit_capture_armed(method, path, target, parameters, cookie, content_length, exp, addr, SSL):
     exploit = exp.split("#")[1]
     exploit = exploit.replace("$method", method)
     exploit = exploit.replace("$path", path)
@@ -394,16 +394,16 @@ def exploit_xss():
         if "EXPLOIT-4" in exp: # extract exploit-4 (re-exploit XSS)
             if request_type == "TE-CL":
                 if "TE-CL" in exp: # exploit 4 TE-CL
-                    exploit_xss_armed(exploit, method, path, target, header, xss, content_length, exp, addr, SSL)
+                    exploit_xss_armed(method, path, target, header, xss, content_length, exp, addr, SSL)
             elif request_type == "CL-TE":
                 if "CL-TE" in exp: # exploit 4 CL-TE
-                    exploit_xss_armed(exploit, method, path, target, header, xss, content_length, exp, addr, SSL)
+                    exploit_xss_armed(method, path, target, header, xss, content_length, exp, addr, SSL)
             elif request_type == "TE-TE":
                 if "TE-TE" in exp: # exploit 4 TE-TE
-                    exploit_xss_armed(exploit, method, path, target, header, xss, content_length, exp, addr, SSL)
+                    exploit_xss_armed(method, path, target, header, xss, content_length, exp, addr, SSL)
             elif request_type == "CL-CL":
                 if "CL-CL" in exp: # exploit 4 CL-CL
-                    exploit_xss_armed(exploit, method, path, target, header, xss, content_length, exp, addr, SSL)
+                    exploit_xss_armed(method, path, target, header, xss, content_length, exp, addr, SSL)
             else: # send all!
                 exploit = exp.split("#")[1]
                 exploit = exploit.replace("$method", method)
@@ -417,7 +417,7 @@ def exploit_xss():
                 print(str(exploit))
                 send_exploit(addr, SSL, exploit) # send expoit
 
-def exploit_xss_armed(exploit, method, path, target, header, xss, content_length, exp, addr, SSL):
+def exploit_xss_armed(method, path, target, header, xss, content_length, exp, addr, SSL):
     exploit = exp.split("#")[1]
     exploit = exploit.replace("$method", method)
     exploit = exploit.replace("$path", path)
@@ -449,16 +449,16 @@ def exploit_openredirect():
         if "EXPLOIT-5" in exp: # extract exploit-5 (open-redirect)
             if request_type == "TE-CL":
                 if "TE-CL" in exp: # exploit 5 TE-CL
-                    exploit_xss_armed(exploit, method, path, target, location, content_length, exp, addr, SSL)
+                    exploit_xss_armed(method, path, target, location, content_length, exp, addr, SSL)
             elif request_type == "CL-TE":
                 if "CL-TE" in exp: # exploit 5 CL-TE
-                    exploit_xss_armed(exploit, method, path, target, location, content_length, exp, addr, SSL)
+                    exploit_xss_armed(method, path, target, location, content_length, exp, addr, SSL)
             elif request_type == "TE-TE":
                 if "TE-TE" in exp: # exploit 5 TE-TE
-                    exploit_xss_armed(exploit, method, path, target, location, content_length, exp, addr, SSL)
+                    exploit_xss_armed(method, path, target, location, content_length, exp, addr, SSL)
             elif request_type == "CL-CL":
                 if "CL-CL" in exp: # exploit 5 CL-CL
-                    exploit_xss_armed(exploit, method, path, target, location, content_length, exp, addr, SSL)
+                    exploit_xss_armed(method, path, target, location, content_length, exp, addr, SSL)
             else: # send all!
                 exploit = exp.split("#")[1]
                 exploit = exploit.replace("$method", method)
@@ -471,7 +471,7 @@ def exploit_openredirect():
                 print(str(exploit))
                 send_exploit(addr, SSL, exploit) # send expoit
 
-def exploit_openredirect_armed(exploit, method, path, target, location, content_length, exp, addr, SSL):
+def exploit_openredirect_armed(method, path, target, location, content_length, exp, addr, SSL):
     exploit = exp.split("#")[1]
     exploit = exploit.replace("$method", method)
     exploit = exploit.replace("$path", path)
@@ -503,16 +503,16 @@ def exploit_poison():
         if "EXPLOIT-6" in exp: # extract exploit-6 (web cache poison)
             if request_type == "TE-CL":
                 if "TE-CL" in exp: # exploit 6 TE-CL
-                    exploit_poison_armed(exploit, method, path, target, location, script, content_length, exp, addr, SSL)
+                    exploit_poison_armed(method, path, target, location, script, content_length, exp, addr, SSL)
             elif request_type == "CL-TE":
                 if "CL-TE" in exp: # exploit 6 CL-TE
-                    exploit_poison_armed(exploit, method, path, target, location, script, content_length, exp, addr, SSL)
+                    exploit_poison_armed(method, path, target, location, script, content_length, exp, addr, SSL)
             elif request_type == "TE-TE":
                 if "TE-TE" in exp: # exploit 6 TE-TE
-                    exploit_poison_armed(exploit, method, path, target, location, script, content_length, exp, addr, SSL)
+                    exploit_poison_armed(method, path, target, location, script, content_length, exp, addr, SSL)
             elif request_type == "CL-CL":
                 if "CL-CL" in exp: # exploit 6 CL-CL
-                    exploit_poison_armed(exploit, method, path, target, location, script, content_length, exp, addr, SSL)
+                    exploit_poison_armed(method, path, target, location, script, content_length, exp, addr, SSL)
             else: # send all!
                 exploit = exp.split("#")[1]
                 exploit = exploit.replace("$method", method)
@@ -526,7 +526,7 @@ def exploit_poison():
                 print(str(exploit))
                 send_exploit(addr, SSL, exploit) # send expoit
 
-def exploit_poison_armed(exploit, method, path, target, location, script, content_length, exp, addr, SSL):
+def exploit_poison_armed(method, path, target, location, script, content_length, exp, addr, SSL):
     exploit = exp.split("#")[1]
     exploit = exploit.replace("$method", method)
     exploit = exploit.replace("$path", path)
@@ -558,16 +558,16 @@ def exploit_deception():
         if "EXPLOIT-7" in exp: # extract exploit-7 (web cache deception)
             if request_type == "TE-CL":
                 if "TE-CL" in exp: # exploit 7 TE-CL
-                    exploit_deception_armed(exploit, method, path, target, private, content_length, exp, addr, SSL)
+                    exploit_deception_armed(method, path, target, private, content_length, exp, addr, SSL)
             elif request_type == "CL-TE":
                 if "CL-TE" in exp: # exploit 7 CL-TE
-                    exploit_deception_armed(exploit, method, path, target, private, content_length, exp, addr, SSL)
+                    exploit_deception_armed(method, path, target, private, content_length, exp, addr, SSL)
             elif request_type == "TE-TE":
                 if "TE-TE" in exp: # exploit 7 TE-TE
-                    exploit_deception_armed(exploit, method, path, target, private, content_length, exp, addr, SSL)
+                    exploit_deception_armed(method, path, target, private, content_length, exp, addr, SSL)
             elif request_type == "CL-CL":
                 if "CL-CL" in exp: # exploit 7 CL-CL
-                    exploit_deception_armed(exploit, method, path, target, private, content_length, exp, addr, SSL)
+                    exploit_deception_armed(method, path, target, private, content_length, exp, addr, SSL)
             else: # send all!
                 exploit = exp.split("#")[1]
                 exploit = exploit.replace("$method", method)
@@ -580,7 +580,7 @@ def exploit_deception():
                 print(str(exploit))
                 send_exploit(addr, SSL, exploit) # send expoit
 
-def exploit_deception_armed(exploit, method, path, target, private, content_length, exp, addr, SSL):
+def exploit_deception_armed(method, path, target, private, content_length, exp, addr, SSL):
     exploit = exp.split("#")[1]
     exploit = exploit.replace("$method", method)
     exploit = exploit.replace("$path", path)
