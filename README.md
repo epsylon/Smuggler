@@ -45,8 +45,6 @@
 
 ![c](https://03c8.net/images/smuggler_detection2.png)
 
-![c](https://03c8.net/images/smuggler_results.png)
-
 ![c](https://03c8.net/images/smuggler_exploit.png)
 
 ![c](https://03c8.net/images/smuggler_exploit2.png)

