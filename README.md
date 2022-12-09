@@ -17,9 +17,13 @@
 
  This tool runs on many platforms and it requires Python (3.x.y).
 
-#### Executing:
+#### Launching:
   
-  python smuggler.py (or python3 smuggler.py)
+ python smuggler.py (or python3 smuggler.py)
+
+#### Exploiting:
+
+![c](https://03c8.net/images/smuggler_exploit.png)
 
 ----------
 
@@ -45,7 +49,9 @@
 
 ![c](https://03c8.net/images/smuggler_detection2.png)
 
-![c](https://03c8.net/images/smuggler_exploit.png)
-
 ![c](https://03c8.net/images/smuggler_exploit2.png)
+
+![c](https://03c8.net/images/smuggler_exploit3.png)
+
+![c](https://03c8.net/images/smuggler_exploit4.png)
 

